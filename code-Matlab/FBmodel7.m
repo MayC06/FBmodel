@@ -1,5 +1,5 @@
 function res = FBmodel7(gust_res,p_PFNd,p_PFNv,p_PFNpc,p_PFNa,heatmaps,plt)
-% This function will generate sinusoidal bumps in the EB (for EPGs) and in
+% This function will generate sinusoidal bumps for the compass/EB and in
 % the PB and FB (for PFNs). It takes parameters previously determined
 % from fitting for timecourses of PFN calcium intensity and bump position 
 % in the PB.
@@ -9,12 +9,10 @@ function res = FBmodel7(gust_res,p_PFNd,p_PFNv,p_PFNpc,p_PFNa,heatmaps,plt)
 % Omag (OF speed), and time vector in frame-seconds (usually 
 % matched to imaging data framerate).
 
-% For parameters, load PFNd_params.mat and PFNpc_params.mat
+% For parameters, load PFNa_params.mat, PFNd_params.mat, PFNpc_params.mat, 
+% and PFNv_params.mat.
 
     p_bump = 2; % bump position tau for egocentric airflow (pulled from PFNd)
-
-% Other neuron types to eventually include:
-% p_PFNa = []; % a whole new thing I gotta make
 
 % Input stimulus vectors. Directions are egocent. with (+) = fly's right
     heading = gust_res.heading; % vector of allocentric heading directions (rad)
@@ -48,7 +46,7 @@ function res = FBmodel7(gust_res,p_PFNd,p_PFNv,p_PFNpc,p_PFNa,heatmaps,plt)
     ha = spda; % airspeeds
     ha(ha~=0)=1; % binarize airspeed on/off
     bumppos = bumpmdl_de(p_bump,thva,t,ha); % bump movement due to airflow
-    bumppos = bumppos + (180/pi)*heading;
+    bumppos = bumppos - (180/pi)*heading;
     
     if ~heatmaps % output the amplitude and bump position vectors for each neuron type
         PFNd_bump(1,:) = wrapTo180(bumppos+45);
@@ -58,10 +56,10 @@ function res = FBmodel7(gust_res,p_PFNd,p_PFNv,p_PFNpc,p_PFNa,heatmaps,plt)
         PFNpc_bump(1,:) = wrapTo180(bumppos+45);
         PFNpc_bump(2,:) = wrapTo180(bumppos-45);
         for i = 1:length(t)
-            if thva(i) > 0 && spda(i) > 0
+            if thva(i) > 0.1 && spda(i) > 0
                 PFNa_bump(1,i) = wrapTo180(bumppos(i)+45+180);
                 PFNa_bump(2,i) = wrapTo180(bumppos(i)-45);
-            elseif thva(i) < 0 && spda(i) > 0
+            elseif thva(i) < -0.1 && spda(i) > 0
                 PFNa_bump(1,i) = wrapTo180(bumppos(i)+45);
                 PFNa_bump(2,i) = wrapTo180(bumppos(i)-45+180);
             else
@@ -71,6 +69,8 @@ function res = FBmodel7(gust_res,p_PFNd,p_PFNv,p_PFNpc,p_PFNa,heatmaps,plt)
         end
         
         % return results
+        % These are the representations in the PB (protocerebral bridge).
+        res.bump = bumppos;
         res.PFNd_amp = PFNd_amp;
         res.PFNv_amp = PFNv_amp;
         res.PFNpc_amp = PFNpc_amp;
@@ -81,8 +81,24 @@ function res = FBmodel7(gust_res,p_PFNd,p_PFNv,p_PFNpc,p_PFNa,heatmaps,plt)
         res.PFNpc_bump = PFNpc_bump;
         res.PFNa_bump = PFNa_bump;
         
+        % This section sums the PFN representations from the bridge as they
+        % would be in the FB, within-type (includes 45-deg shift). 
+        % Requires function sumPFNvecs.m. If matlab has a builtin phasor
+        % summation function, I couldn't find it so I built my own.
+        [res.PFNd_bumpFB res.PFNd_ampFB] = ...
+            sumPFNvecs((pi/180)*res.PFNd_bump,res.PFNd_amp);
+        [res.PFNv_bumpFB res.PFNv_ampFB] = ...
+            sumPFNvecs((pi/180)*res.PFNv_bump,res.PFNv_amp);
+        [res.PFNpc_bumpFB res.PFNpc_ampFB] = ...
+            sumPFNvecs((pi/180)*res.PFNpc_bump,res.PFNpc_amp);
+        [res.PFNa_bumpFB res.PFNa_ampFB] = ...
+            sumPFNvecs((pi/180)*res.PFNa_bump,res.PFNa_amp);
+        
     elseif heatmaps
-    % Sinusoids over time.
+    % Sinusoids over time. These augment the amplitudes so that we don't go
+    % negative and also so the bump structure doesn't hit a minimum. Need
+    % to fix this later - FB sum amplitudes therefore differ in ~heatmaps
+    % vs. heatmaps sections.
         for i=1:length(t)
 
             % compass neurons report heading and airflow direction
@@ -109,10 +125,10 @@ function res = FBmodel7(gust_res,p_PFNd,p_PFNv,p_PFNpc,p_PFNa,heatmaps,plt)
     %         PFNpcR_pb(:,i) = (PFNpc_amp(2,i)+0.5) * (0.6 + 0.2*cosd([-135:45:180]));
 
             % PB sinusoids for PFNa - bump needs to shift 180deg when AF contralateral
-            if thva(i) > 0 && spda(i) > 0
+            if thva(i) > 0.1 && spda(i) > 0
                 PFNaL_pb(:,i) = (PFNa_amp(1,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)+180));
                 PFNaR_pb(:,i) = (PFNa_amp(2,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
-            elseif thva(i) < 0 && spda(i) > 0
+            elseif thva(i) < -0.1 && spda(i) > 0
                 PFNaL_pb(:,i) = (PFNa_amp(1,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
                 PFNaR_pb(:,i) = (PFNa_amp(2,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)+180));
             else
