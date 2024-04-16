@@ -7,7 +7,7 @@ function res = bumpmdl_de(params,thetavec,t,h)
 % parameters
 tau = params(1);
 
-res(1) = 0;
+res(1) = thetavec(1);
 
 for i = 1:length(t)-1
     coeff = -wrapTo180((180/pi)*thetavec(i))*h(i);

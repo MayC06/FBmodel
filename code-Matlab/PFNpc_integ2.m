@@ -10,10 +10,10 @@ function res = PFNpc_integ2(params,inputs)
 %   time ]
 
 % Calculate single-half PB OF response
-OF = D_PC_response_de(params(2,:),inputs([3:5],:));
+OF = PC_response_de(params(2,:),inputs([3:5],:));
 
 % Calculate single-half PB AF response 
-AF = D_PC_response_de(params(1,:),inputs([1,2,5],:));
+AF = PC_response_de(params(1,:),inputs([1,2,5],:));
 
 % Instantiate result
 res = zeros(1,length(inputs(1,:)));
