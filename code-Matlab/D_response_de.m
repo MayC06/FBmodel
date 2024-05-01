@@ -26,7 +26,8 @@ flip = params(8); % for rising OF response =0 vs. falling AF response !=0
 % steady state if the first timestep inputs were held constant).
 C = a*(1-exp(c*-speedvec)).*(cos(thetavec-prefdir)+b);
 T = tau+tauslope.*exp(speedvec./100);
-res(1) = ratio*C(1);
+% res(1) = ratio*C(1);
+res(1) = C(1);
 
 
 % Handle direction of response (rise/decay).
@@ -50,9 +51,9 @@ end
 
 
 % Plot, if you want to; comment out otherwise.
-figure; 
-subplot(4,1,1); plot(thetavec); ylim([-pi pi])
-subplot(4,1,2); plot(speedvec(1:100)); ylim([0 100])
-subplot(4,1,3); plot(ones(1,129)*ratio);
-subplot(4,1,4); plot(C(1:100));
-hold on; plot(res(1:100));
+% figure; 
+% subplot(4,1,1); plot(thetavec); ylim([-pi pi])
+% subplot(4,1,2); plot(speedvec(1:100)); ylim([0 100])
+% subplot(4,1,3); plot(ones(1,129)*ratio);
+% subplot(4,1,4); plot(C(1:100));
+% hold on; plot(res(1:100));

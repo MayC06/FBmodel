@@ -27,7 +27,8 @@ flip = params(8); % for rising OF response =0 vs. falling AF response !=0
 C = a*(1-exp(-speedvec)).*(cos(thetavec-prefdir).^2 + c*cos(thetavec-prefdir+pi) + b);
 T = tau;
 ratio = r + d*cos(thetavec-prefdir);
-res(1) = ratio(1)*C(1);
+% res(1) = ratio(1)*C(1);
+res(1) = C(1);
 
 
 % Handle direction of response (rise/decay).

@@ -1,29 +1,39 @@
 function res = FBmodel7(gust_res,p_PFNd,p_PFNv,p_PFNpc,p_PFNa,heatmaps,plt)
-% This function will generate sinusoidal bumps for the compass/EB and in
-% the PB and FB (for PFNs). It takes parameters previously determined
-% from fitting for timecourses of PFN calcium intensity and bump position 
-% in the PB.
+% This function will generate sinusoidal bumps in an eight-column space for 
+% the compass/EB and in the PB and FB (for PFNs). It takes parameters 
+% previously determined from fitting for timecourses of PFN calcium 
+% intensity and bump position in the PB.
 
-% gust_res is a stimulus input structure with six fields: heading,
-% Atheta (AF direction), Amag (airspeed), Otheta (OF direction), 
-% Omag (OF speed), and time vector in frame-seconds (usually 
-% matched to imaging data framerate).
+% gust_res is a stimulus input structure with six fields of vectors: 
+% heading, Atheta (AF direction), Amag (airspeed), Otheta (OF direction), 
+% Omag (OF speed), and time in frame-seconds (usually matched to imaging 
+% data framerate).
 
 % For parameters, load PFNa_params.mat, PFNd_params.mat, PFNpc_params.mat, 
 % and PFNv_params.mat.
 
-    p_bump = 2; % bump position tau for egocentric airflow (pulled from PFNd)
+    p_bump = 2; % bump position tau for egocent. airflow (pulled from PFNd)
 
 % Input stimulus vectors. Directions are egocent. with (+) = fly's right
     heading = gust_res.heading; % vector of allocentric heading directions (rad)
     thva = gust_res.Atheta; % vector of egocentric airflow directions (rad) over time
     spda = gust_res.Amag; % vector of airspeeds in cm/s over time
     thvo = gust_res.Otheta; % vector of egocentric optic flow directions (rad) over time
-    spdo = gust_res.Omag; % vector of optic flow speeds in cm/s over time (assuming matching with AF)
+    spdo = gust_res.Omag; % vector of optic flow speeds in cm/s over time (assumes matching with AF)
     t = gust_res.t; %[len/frames:len/frames:len] where len is in seconds
-
+    
+    % This handles starting from non-zero values.
+    dt = t(2)-t(1);    
+    lead = floor(5/dt);
+    heading = [ones(1,floor(5/(dt)))*heading(1) heading];
+    thva = [ones(1,floor(5/(dt)))*thva(1) thva];
+    spda = [ones(1,floor(5/(dt)))*spda(1) spda];
+    thvo = [ones(1,floor(5/(dt)))*thvo(1) thvo];
+    spdo = [ones(1,floor(5/(dt)))*spdo(1) spdo];
+    t = [t(1):dt:t(end)+(lead*dt)];
+    
 % Convert egocent. inputs to ipsi/contra for each PB hemisphere
-% just flip the direction signs for left-side PB
+% Just flip the direction signs for left-side PB
     Rinputs = [thva;spda;thvo;spdo;t];
     Linputs = [-thva;spda;-thvo;spdo;t];
 
@@ -46,9 +56,10 @@ function res = FBmodel7(gust_res,p_PFNd,p_PFNv,p_PFNpc,p_PFNa,heatmaps,plt)
     ha = spda; % airspeeds
     ha(ha~=0)=1; % binarize airspeed on/off
     bumppos = bumpmdl_de(p_bump,thva,t,ha); % bump movement due to airflow
-    bumppos = bumppos - (180/pi)*heading;
+    bumppos = (180/pi)*(bumppos - heading);
     
     if ~heatmaps % output the amplitude and bump position vectors for each neuron type
+        % which units are better, deg vs. rad?
         PFNd_bump(1,:) = wrapTo180(bumppos+45);
         PFNd_bump(2,:) = wrapTo180(bumppos-45);
         PFNv_bump(1,:) = wrapTo180(bumppos+45);
@@ -70,16 +81,16 @@ function res = FBmodel7(gust_res,p_PFNd,p_PFNv,p_PFNpc,p_PFNa,heatmaps,plt)
         
         % return results
         % These are the representations in the PB (protocerebral bridge).
-        res.bump = bumppos;
-        res.PFNd_amp = PFNd_amp;
-        res.PFNv_amp = PFNv_amp;
-        res.PFNpc_amp = PFNpc_amp;
-        res.PFNa_amp = PFNa_amp;
+        res.bump = bumppos(lead+1:end)';
+        res.PFNd_amp = PFNd_amp(:,lead+1:end)';
+        res.PFNv_amp = PFNv_amp(:,lead+1:end)';
+        res.PFNpc_amp = PFNpc_amp(:,lead+1:end)';
+        res.PFNa_amp = PFNa_amp(:,lead+1:end)';
         
-        res.PFNd_bump = PFNd_bump;
-        res.PFNv_bump = PFNv_bump;
-        res.PFNpc_bump = PFNpc_bump;
-        res.PFNa_bump = PFNa_bump;
+        res.PFNd_bump = PFNd_bump(:,lead+1:end)';
+        res.PFNv_bump = PFNv_bump(:,lead+1:end)';
+        res.PFNpc_bump = PFNpc_bump(:,lead+1:end)';
+        res.PFNa_bump = PFNa_bump(:,lead+1:end)';
         
         % This section sums the PFN representations from the bridge as they
         % would be in the FB, within-type (includes 45-deg shift). 
@@ -99,14 +110,14 @@ function res = FBmodel7(gust_res,p_PFNd,p_PFNv,p_PFNpc,p_PFNa,heatmaps,plt)
     % negative and also so the bump structure doesn't hit a minimum. Need
     % to fix this later - FB sum amplitudes therefore differ in ~heatmaps
     % vs. heatmaps sections.
-        for i=1:length(t)
+        for i=1:length(t)-lead
 
             % compass neurons report heading and airflow direction
-            EPG(:,i) = 0.5 + 0.5*cosd([-135:45:180]-bumppos(i));
+            EPG(:,i) = 0.5 + 0.5*cosd([-135:45:180]-bumppos(i+lead));
 
             % PB sinusoids for PFNd
-            PFNdL_pb(:,i) = (PFNd_amp(1,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
-            PFNdR_pb(:,i) = (PFNd_amp(2,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
+            PFNdL_pb(:,i) = (PFNd_amp(1,i+lead)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i+lead)));
+            PFNdR_pb(:,i) = (PFNd_amp(2,i+lead)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i+lead)));
 
             % PB sinusoids for PFNv
             % IMPORTANT NOTE FOR PFNV:
@@ -114,26 +125,26 @@ function res = FBmodel7(gust_res,p_PFNd,p_PFNv,p_PFNpc,p_PFNa,heatmaps,plt)
             % sensitive to airflow direction. This model assumes inverted
             % vectors from PFNd, as shown for OF representations in Lyu et al.
             % (Maimon lab) 2022 and Lu et al. (Wilson lab) 2022
-            PFNvL_pb(:,i) = (PFNv_amp(1,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
-            PFNvR_pb(:,i) = (PFNv_amp(2,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
+            PFNvL_pb(:,i) = (PFNv_amp(1,i+lead)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i+lead)));
+            PFNvR_pb(:,i) = (PFNv_amp(2,i+lead)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i+lead)));
 
             % PB sinusoids for PFNpc
             % include bump movement?
-            PFNpcL_pb(:,i) = (PFNpc_amp(1,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
-            PFNpcR_pb(:,i) = (PFNpc_amp(2,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
+            PFNpcL_pb(:,i) = (PFNpc_amp(1,i+lead)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i+lead)));
+            PFNpcR_pb(:,i) = (PFNpc_amp(2,i+lead)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i+lead)));
     %         PFNpcL_pb(:,i) = (PFNpc_amp(1,i)+0.5) * (0.6 + 0.2*cosd([-135:45:180]));
     %         PFNpcR_pb(:,i) = (PFNpc_amp(2,i)+0.5) * (0.6 + 0.2*cosd([-135:45:180]));
 
-            % PB sinusoids for PFNa - bump needs to shift 180deg when AF contralateral
-            if thva(i) > 0.1 && spda(i) > 0
-                PFNaL_pb(:,i) = (PFNa_amp(1,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)+180));
-                PFNaR_pb(:,i) = (PFNa_amp(2,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
-            elseif thva(i) < -0.1 && spda(i) > 0
-                PFNaL_pb(:,i) = (PFNa_amp(1,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
-                PFNaR_pb(:,i) = (PFNa_amp(2,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)+180));
+            % PB sinusoids for PFNa: bump needs to shift 180deg when AF contralateral
+            if thva(i+lead) > 0.1 && spda(i+lead) > 0
+                PFNaL_pb(:,i) = (PFNa_amp(1,i+lead)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i+lead)+180));
+                PFNaR_pb(:,i) = (PFNa_amp(2,i+lead)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i+lead)));
+            elseif thva(i+lead) < -0.1 && spda(i+lead) > 0
+                PFNaL_pb(:,i) = (PFNa_amp(1,i+lead)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i+lead)));
+                PFNaR_pb(:,i) = (PFNa_amp(2,i+lead)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i+lead)+180));
             else
-                PFNaL_pb(:,i) = (PFNa_amp(1,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
-                PFNaR_pb(:,i) = (PFNa_amp(2,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
+                PFNaL_pb(:,i) = (PFNa_amp(1,i+lead)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i+lead)));
+                PFNaR_pb(:,i) = (PFNa_amp(2,i+lead)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i+lead)));
             end
 
             % FB sinusoids for PFNd
