@@ -1,4 +1,4 @@
-function res = D_response_de(params,inputs)
+function res = D_response_de(params,inputs,initcond)
 % This function generates a vector of intensity values over time for one
 % half of the PB innervated by PFNd, to a sequence of single-modality 
 % experience (either AF or OF).
@@ -26,15 +26,20 @@ flip = params(8); % for rising OF response =0 vs. falling AF response !=0
 % steady state if the first timestep inputs were held constant).
 C = a*(1-exp(c*-speedvec)).*(cos(thetavec-prefdir)+b);
 T = tau+tauslope.*exp(speedvec./100);
-% res(1) = ratio*C(1);
-res(1) = C(1);
-
+% res(1) = (ratio)*C(1);
+% res(1) = C(1);
+res(1) = initcond;
+% res(1) = C(1)-initcond;
+rat=ratio;
+initialforthistrial = ratio*C(1)
 
 % Handle direction of response (rise/decay).
 if flip ~=0 % if AF response curve
+    res(1) = C(1)-initcond;
     ratio = 1-ratio;
 end
 
+% res(1) = ratio*C(1);
 
 % Calculate numerical solution using the given inputs and parameters.
 for i = 1:length(t)-1
@@ -53,7 +58,8 @@ end
 % Plot, if you want to; comment out otherwise.
 % figure; 
 % subplot(4,1,1); plot(thetavec); ylim([-pi pi])
-% subplot(4,1,2); plot(speedvec(1:100)); ylim([0 100])
-% subplot(4,1,3); plot(ones(1,129)*ratio);
-% subplot(4,1,4); plot(C(1:100));
-% hold on; plot(res(1:100));
+% subplot(4,1,2); plot(speedvec); ylim([0 100])
+% subplot(4,1,3); plot(ratio);
+% subplot(4,1,4); plot(C);
+% hold on; plot((rat)*C);
+% hold on; plot(res);

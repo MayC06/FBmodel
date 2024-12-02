@@ -1,4 +1,4 @@
-function res = A_response_de(params,inputs)
+function res = A_response_de(params,inputs,initcond)
 % This function generates a vector of intensity values over time for one
 % half of the PB innervated by PFNa, to a sequence of single-modality 
 % experience (either AF or OF).
@@ -28,14 +28,17 @@ C = a*(1-exp(-speedvec)).*(cos(thetavec-prefdir).^2 + c*cos(thetavec-prefdir+pi)
 T = tau;
 ratio = r + d*cos(thetavec-prefdir);
 % res(1) = ratio(1)*C(1);
-res(1) = C(1);
-
+% res(1) = C(1);
+res(1) = initcond;
+initialforthistrial = ratio(1)*C(1)
 
 % Handle direction of response (rise/decay).
 if flip ~=0 % if AF response curve
+%     res(1) = C(1)-initcond;
     ratio = 1-ratio;
 end
 
+% res(1) = ratio(1)*C(1);
 
 % Calculate numerical solution using the given inputs and parameters.
 for i = 1:length(t)-1
@@ -46,7 +49,8 @@ end
 
 % Handle negative values for AF response curves.
 if flip~=0
-    res = max(0,C - res);
+%     res = max(0,C - res);
+    res = abs(C-res);
 %     res = C-res;
 end
 
@@ -57,4 +61,5 @@ end
 % subplot(4,1,2); plot(speedvec); ylim([0 100])
 % subplot(4,1,3); plot(ratio);
 % subplot(4,1,4); plot(C);
+% hold on; plot((1-ratio).*C);
 % hold on; plot(res);

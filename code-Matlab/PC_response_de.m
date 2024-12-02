@@ -1,4 +1,4 @@
-function res = PC_response_de(params,inputs)
+function res = PC_response_de(params,inputs,initcond)
 % This function generates a vector of intensity values over time for one
 % half of the PB innervated by PFNp_c, to a sequence of single-modality 
 % experience (either AF or OF).
@@ -28,15 +28,18 @@ flip = params(8); % for rising OF response =0 vs. falling AF response !=0
 C = a*(1-exp(c*-speedvec)).*(cos(thetavec-prefdir)+b);
 T = tau+tauslope.*exp(speedvec./100);
 % res(1) = ratio*C(1);
-res(1) = C(1);
+% res(1) = C(1);
 % res(1) = C(2)-C(1);
-
+res(1) = initcond;
+initialforthistrial = ratio*C(1)
 
 % Handle direction of response (rise/decay).
 if flip ~=0 % if AF response curve
+    res(1) = C(1)-initcond;
     ratio = 1-ratio;
 end
 
+% res(1) = ratio*C(1);
 
 % Calculate numerical solution using the given inputs and parameters.
 for i = 1:length(t)-1
@@ -48,6 +51,7 @@ end
 % Handle negative values for AF response curves.
 if flip~=0
     res = abs(C-res);
+%     res = max(0,C-res);
 %     res = C-res;
 end
 
@@ -57,5 +61,5 @@ end
 % subplot(4,1,1); plot(thetavec); ylim([-pi pi]); title('AF direction')
 % subplot(4,1,2); plot(speedvec); ylim([0 100]); title('airspeed')
 % subplot(4,1,3); plot(C); title('C')
-% subplot(4,1,4); plot(C*ratio); title('C x ratio, res')
+% subplot(4,1,4); plot(C*(1-ratio)); title('C x ratio, res')
 % hold on; plot(res);

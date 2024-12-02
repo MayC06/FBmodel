@@ -1,4 +1,4 @@
-function res = PFNa_integ(params,inputs)
+function res = PFNa_integ(params,inputs,inits)
 
 % params = array where first row is AF, second row is OF
 % inputs = array where:
@@ -9,10 +9,10 @@ function res = PFNa_integ(params,inputs)
 %   time ]
 
 % Calculate single-half PB OF response
-OF = A_response_de(params(2,:),inputs([3:5],:));
+OF = A_response_de(params(2,:),inputs([3:5],:),inits(2));
 
 % Calculate single-half PB AF response 
-AF = A_response_de(params(1,:),inputs([1,2,5],:));
+AF = A_response_de(params(1,:),inputs([1,2,5],:),inits(1));
 
 % Instantiate result
 res = zeros(1,length(inputs(1,:)));
