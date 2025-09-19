@@ -11,12 +11,12 @@ function res = PFNpc_integ2(params,inputs,inits)
 
 
 % Calculate single-half PB AF response 
-% AF = PC_response_de(params(1,:),inputs([1,2,5],:),inits(1));
-AF = on_off_de(params(1:2,:),inputs([1,2,5],:),inits(1));
+AF = PC_response_de(params(1,:),inputs([1,2,5],:),inits(1));
+% AF = on_off_de(params(1:2,:),inputs([1,2,5],:),inits(1));
 
 % Calculate single-half PB OF response
-% OF = PC_response_de(params(2,:),inputs([3:5],:),inits(2));
-OF = on_off_de(params(3:4,:),inputs([3:5],:),inits(2));
+OF = PC_response_de(params(2,:),inputs([3:5],:),inits(2));
+% OF = on_off_de(params(3:4,:),inputs([3:5],:),inits(2));
 
 % Instantiate result
 res = zeros(1,length(inputs(1,:)));

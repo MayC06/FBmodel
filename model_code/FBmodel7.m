@@ -4,7 +4,7 @@ function res = FBmodel7(gust_res,p_PFNd,p_PFNv,p_PFNpc,p_PFNa,inits,heatmaps,plt
 % previously determined from fitting for timecourses of PFN calcium 
 % intensity and bump position in the PB.
 
-% gust_res is a stimulus input structure with six fields of vectors: 
+% gust_res is a stimulus input structure with six fields of ROW vectors: 
 % heading, Atheta (AF direction), Amag (airspeed), Otheta (OF direction), 
 % Omag (OF speed), and time in frame-seconds (usually matched to imaging 
 % data framerate).
@@ -65,6 +65,7 @@ function res = FBmodel7(gust_res,p_PFNd,p_PFNv,p_PFNpc,p_PFNa,inits,heatmaps,plt
     % If heading does not drive bump movement:
 %     bumppos = (180/pi)*bumppos;
     
+    disp(size(bumppos))
     if ~heatmaps % output the amplitude and bump position vectors for each neuron type
         % which units are better, deg vs. rad?
         PFNd_bump(1,:) = wrapTo180(bumppos+45);
