@@ -27,6 +27,7 @@ flip = params(8); % for rising OF response =0 vs. falling AF response !=0
 % steady state if the first timestep inputs were held constant).
 C = a*(1-exp(c*-speedvec)).*(cos(thetavec-prefdir)+b);
 T = tau+tauslope.*exp(speedvec./100);
+figure; plot(T)
 % res(1) = ratio*C(1);
 % res(1) = C(1);
 % res(1) = C(2)-C(1);
