@@ -78,9 +78,9 @@ function res = FBmodel7(gust_res,p_PFNd,p_PFNv,p_PFNpc,p_PFNa,inits,heatmaps,plt
         PFNa_bump(2,:) = wrapTo180(bumppos-45);
         for i = 1:length(t)
             if spda(i) > 0
-                if thva(i) > 0.1
+                if thva(i) > 0.78 && thva(i) < -2.35
                     PFNa_bump(1,i) = wrapTo180(bumppos(i)+45+180);
-                elseif thva(i) < -0.1
+                elseif thva(i) < -0.78 && thva(i) > 2.35
                     PFNa_bump(2,i) = wrapTo180(bumppos(i)-45+180);
                 end
             end
@@ -148,21 +148,25 @@ function res = FBmodel7(gust_res,p_PFNd,p_PFNv,p_PFNpc,p_PFNa,inits,heatmaps,plt
 
             % PB sinusoids for PFNpc
 %             % include bump movement?
-%             PFNpcL_pb(:,i) = (PFNpc_amp(1,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
-%             PFNpcR_pb(:,i) = (PFNpc_amp(2,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
-            PFNpcL_pb(:,i) = (PFNpc_amp(1,i)+0.5) * (0.6 + 0.2*cosd([-135:45:180]-bumppos(i)));
-            PFNpcR_pb(:,i) = (PFNpc_amp(2,i)+0.5) * (0.6 + 0.2*cosd([-135:45:180]-bumppos(i)));
+            PFNpcL_pb(:,i) = (PFNpc_amp(1,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]));%-bumppos(i)));
+            PFNpcR_pb(:,i) = (PFNpc_amp(2,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]));%-bumppos(i)));
+%             PFNpcL_pb(:,i) = (PFNpc_amp(1,i)+0.5) * (0.6 + 0.2*cosd([-135:45:180]-bumppos(i)));
+%             PFNpcR_pb(:,i) = (PFNpc_amp(2,i)+0.5) * (0.6 + 0.2*cosd([-135:45:180]-bumppos(i)));
 
             % PB sinusoids for PFNa: bump needs to shift 180deg when AF contralateral
-            if thva(i) > 0.1 && spda(i) > 0
-                PFNaL_pb(:,i) = (PFNa_amp(1,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)+180));
-                PFNaR_pb(:,i) = (PFNa_amp(2,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
-            elseif thva(i) < -0.1 && spda(i) > 0
-                PFNaL_pb(:,i) = (PFNa_amp(1,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
-                PFNaR_pb(:,i) = (PFNa_amp(2,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)+180));
-            else
-                PFNaL_pb(:,i) = (PFNa_amp(1,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
-                PFNaR_pb(:,i) = (PFNa_amp(2,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
+            if spda(i) > 0
+                if (thva(i) > 0.78) | (thva < -2.35)
+                    PFNaL_pb(:,i) = (PFNa_amp(1,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)+180));
+                    PFNaR_pb(:,i) = (PFNa_amp(2,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
+                elseif (thva(i) < -0.78) | (thva(i) > 2.35)
+                    disp('say hello')
+                    PFNaL_pb(:,i) = (PFNa_amp(1,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
+                    PFNaR_pb(:,i) = (PFNa_amp(2,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)+180));
+%                 end
+                else
+                    PFNaL_pb(:,i) = (PFNa_amp(1,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
+                    PFNaR_pb(:,i) = (PFNa_amp(2,i)+0.5) * (0.5 + 0.5*cosd([-135:45:180]-bumppos(i)));
+                end
             end
 
             % FB sinusoids for PFNd
