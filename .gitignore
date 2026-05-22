@@ -1,5 +1,4 @@
 "file types for git to ignore"
-*.mat
 *.csv
 *.svg
 *.jpeg
